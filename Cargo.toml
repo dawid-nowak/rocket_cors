@@ -22,7 +22,8 @@ serialization = ["serde", "serde_derive", "unicase_serde"]
 
 [dependencies]
 regex = "1.1"
-rocket = { version = "0.5.0-rc.1", default-features = false }
+#rocket = { version = "0.5.0-rc.1", default-features = false }
+rocket = {path="../Rocket/core/lib", features=["json","uuid"] }
 log = "0.4"
 unicase = "2.0"
 url = "2.1.0"
