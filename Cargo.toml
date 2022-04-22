@@ -23,9 +23,9 @@ serialization = ["serde", "serde_derive", "unicase_serde"]
 [dependencies]
 regex = "1.1"
 #rocket = { version = "0.5.0-rc.1", default-features = false }
-rocket = {git="https://github.com/dawid-nowak/Rocket",features=["json","uuid"],branch = "Keeping_up_to_date_with_Diesel" }
+rocket = {git="https://github.com/dawid-nowak/Rocket",features=["json","uuid"],branch = "tracing-rebase-202201" }
 
-#rocket = {path="../Rocket/core/lib", features=["json","uuid"] }
+#rocket = {path="../RocketTracing/core/lib", features=["json","uuid","log"] }
 log = "0.4"
 unicase = "2.0"
 url = "2.1.0"

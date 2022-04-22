@@ -270,12 +270,12 @@ use std::ops::Deref;
 use std::str::FromStr;
 
 #[allow(unused_imports)]
-use ::log::{debug, error, info};
+use rocket::trace::{debug, error, info};
 use regex::RegexSet;
 use rocket::http::{self, Status};
 use rocket::request::{FromRequest, Request};
 use rocket::response;
-use rocket::{debug_, error_, info_, outcome::Outcome, State};
+use rocket::{outcome::Outcome, State};
 #[cfg(feature = "serialization")]
 use serde_derive::{Deserialize, Serialize};
 
@@ -409,7 +409,7 @@ impl error::Error for Error {
 
 impl<'r, 'o: 'r> response::Responder<'r, 'o> for Error {
     fn respond_to(self, _: &Request<'_>) -> Result<response::Response<'o>, Status> {
-        error_!("CORS Error: {}", self);
+        error!("CORS Error: {}", self);
         Err(self.status())
     }
 }
@@ -823,10 +823,10 @@ impl ParsedAllowedOrigins {
     }
 
     fn verify(&self, origin: &Origin) -> bool {
-        info_!("Verifying origin: {}", origin);
+        info!("Verifying origin: {}", origin);
         match origin {
             Origin::Null => {
-                info_!("Origin is null. Allowing? {}", self.allow_null);
+                info!("Origin is null. Allowing? {}", self.allow_null);
                 self.allow_null
             }
             Origin::Parsed(ref parsed) => {
@@ -836,13 +836,13 @@ impl ParsedAllowedOrigins {
                 );
                 // Verify by exact, then regex
                 if self.exact.get(parsed).is_some() {
-                    info_!("Origin has an exact match");
+                    info!("Origin has an exact match");
                     return true;
                 }
                 if let Some(regex_set) = &self.regex {
                     let regex_match = regex_set.is_match(&parsed.ascii_serialization());
-                    debug_!("Matching against regex set {:#?}", regex_set);
-                    info_!("Origin has a regex match? {}", regex_match);
+                    debug!("Matching against regex set {:#?}", regex_set);
+                    info!("Origin has a regex match? {}", regex_match);
                     return regex_match;
                 }
 
@@ -852,8 +852,8 @@ impl ParsedAllowedOrigins {
             Origin::Opaque(ref opaque) => {
                 if let Some(regex_set) = &self.regex {
                     let regex_match = regex_set.is_match(opaque);
-                    debug_!("Matching against regex set {:#?}", regex_set);
-                    info_!("Origin has a regex match? {}", regex_match);
+                    debug!("Matching against regex set {:#?}", regex_set);
+                    info!("Origin has a regex match? {}", regex_match);
                     return regex_match;
                 }
 
@@ -1140,6 +1140,11 @@ impl CorsOptions {
     /// Creates a [`Cors`] struct that can be used to respond to requests or as a Rocket Fairing
     pub fn to_cors(&self) -> Result<Cors, Error> {
         Cors::from_options(self)
+    }
+
+    /// Creates a [`Fairing`] struct that can be used to respond to requests or as a Rocket Fairing
+    pub fn to_fairing(&self) -> Result<Box<dyn rocket::fairing::Fairing>, Error> {
+        Ok(Box::new(Cors::from_options(self)?))
     }
 
     /// Sets the allowed origins
@@ -1612,7 +1617,7 @@ where
         let guard = match self.build_guard(request) {
             Ok(guard) => guard,
             Err(err) => {
-                error_!("CORS error: {}", err);
+                error!("CORS error: {}", err);
                 return Err(err.status());
             }
         };
@@ -2000,7 +2005,7 @@ impl rocket::route::Handler for CatchAllOptionsRouteHandler {
             Outcome::Forward(()) => unreachable!("Should not be reachable"),
         };
 
-        info_!(
+        info!(
             "\"Catch all\" handling of CORS `OPTIONS` preflight for request {}",
             request
         );

@@ -1,9 +1,9 @@
 //! Fairing implementation
 
 #[allow(unused_imports)]
-use ::log::{error, info};
 use rocket::http::{self, uri::Origin, Status};
-use rocket::{self, error_, info_, outcome::Outcome, Request};
+use rocket::{self, outcome::Outcome, Request};
+use rocket::trace::{error, info};
 
 use crate::{
     actual_request_response, origin, preflight_response, request_headers, validate, Cors, Error,
@@ -30,7 +30,7 @@ impl rocket::route::Handler for FairingErrorRoute {
             .param::<u16>(0)
             .unwrap_or(Ok(0))
             .unwrap_or_else(|e| {
-                error_!("Fairing Error Handling Route error: {:?}", e);
+                error!("Fairing Error Handling Route error: {:?}", e);
                 500
             });
         let status = Status::from_code(status).unwrap_or(Status::InternalServerError);
@@ -88,7 +88,7 @@ fn on_response_wrapper(
     // TODO: Is there anyway we can make this smarter? Only modify status codes for
     // requests where an actual route exist?
     if request.method() == http::Method::Options && request.route().is_none() {
-        info_!(
+        info!(
             "CORS Fairing: Turned missing route {} into an OPTIONS pre-flight request",
             request
         );
@@ -120,7 +120,7 @@ impl rocket::fairing::Fairing for Cors {
         let result = match validate(self, request) {
             Ok(_) => CorsValidation::Success,
             Err(err) => {
-                error_!("CORS Error: {}", err);
+                error!("CORS Error: {}", err);
                 let status = err.status();
                 route_to_fairing_error_handler(self, status.code, request);
                 CorsValidation::Failure
@@ -132,7 +132,7 @@ impl rocket::fairing::Fairing for Cors {
 
     async fn on_response<'r>(&self, request: &'r Request<'_>, response: &mut rocket::Response<'r>) {
         if let Err(err) = on_response_wrapper(self, request, response) {
-            error_!("Fairings on_response error: {}\nMost likely a bug", err);
+            error!("Fairings on_response error: {}\nMost likely a bug", err);
             response.set_status(Status::InternalServerError);
             let _ = response.body();
         }
